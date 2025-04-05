@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "switchd.py", line 238, in <module>
+    run_switch()
+  File "switchd.py", line 232, in run_switch
+    sleep(1);
+KeyboardInterrupt
