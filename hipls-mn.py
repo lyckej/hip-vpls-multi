@@ -63,9 +63,6 @@ def run():
         info(net[r].cmd('route -n'))
 
 
-
-
-
     router_dirs = {
     'r1': 'router1',
     'r2': 'router2',
@@ -77,6 +74,7 @@ def run():
         dir_name = router_dirs[r]
         info(f'*** Starting HIPLS on {r} ({dir_name}/switchd.py) ***\n')
         net[r].cmd(f'cd {dir_name} && python3 switchd.py > switchd.log 2>&1 &')
+
     # Start HIPLS daemon on each router
     #for r in routers:
     #    info(f'*** Starting HIPLS on {r} ***\n')
