@@ -77,6 +77,10 @@ from hiplib.utils.misc import Utils
 
 class HIPLib():
     def __init__(self, config):
+
+# === THIS SHOULD BE MOVED TO DATATBASE FOR GOVERNOR AT SOME POINT ===
+        self.hit_to_yi_dict = dict() 
+# === ============================= ===
         self.config = config;
         self.MTU = self.config["network"]["mtu"];
 
@@ -270,6 +274,17 @@ class HIPLib():
                 # R1 packet should be constructed only 
                 # if the state is not associated
                 # Need to check with the RFC
+                
+    # =========== EXTRACT yi and map to ihit =====================
+                params = hip_packet.get_parameters()
+                for param in params:
+                    if isinstance(param, ECBDParameter):
+                        ECBD_param = param  # Return the first found ECBDParameter
+                
+                self.hit_to_yi_dict[ihit] = ECBD_param # Remember to change when we move 'hit_to_yi' to the databases
+
+                logging.debug(f" ihit: {ihit}, ECBD_param: {ECBD_param}, hit_to_yi: {self.hit_to_yi_dict} " )
+    # ============ ======================= =======================
 
                 # Construct R1 packet
                 hip_r1_packet = HIP.R1Packet();
@@ -2938,7 +2953,7 @@ class HIPLib():
     def maintenance(self):
         response = []
         for key in self.state_variables.keys():
-            sv = self.state_variables.get_by_key(key);
+            sv = self.state_variables.get_by_key(key); 
 
             if Utils.is_hit_smaller(sv.rhit, sv.ihit):
                 hip_state = self.hip_state_machine.get(Utils.ipv6_bytes_to_hex_formatted(sv.rhit), 
