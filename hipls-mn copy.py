@@ -97,6 +97,8 @@ def run():
     info( net[ 'r1' ].cmd( 'route' ) )
     info( '*** Routing Table on Router:\n' )
     info( net[ 'r2' ].cmd( 'route' ) )
+
+    """
     info( '*** Running HIPLS on router 1 *** \n')
     info( net[ 'r1' ].cmd( 'cd router1 && python3 switchd.py &' ) )
     info( '*** Running HIPLS on router 2 *** \n')
@@ -105,6 +107,8 @@ def run():
     info( net[ 'r3' ].cmd( 'cd router3 && python3 switchd.py &' ) )
     info( '*** Running HIPLS on router 4 *** \n')
     info( net[ 'r4' ].cmd( 'cd router4 && python3 switchd.py &' ) )
+    """
+    
     CLI( net )
     net.stop()
 
