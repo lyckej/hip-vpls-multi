@@ -1,8 +1,8 @@
 config = {
 	"switch": {
-		"l2interface": "hu1-eth0",
+		"l2interface": "r4-eth0",
 		"mesh": "hiplib/config/mesh",
-                "source_ip": "192.168.3.1"
+                "source_ip": "192.168.3.4"
 	},
 	"network": {
 		"tun_name": "hip0",                                    # Interface name
@@ -50,13 +50,6 @@ config = {
 	},
 	"firewall": {
 		"rules_file": "hiplib/config/rules"
-	},
-	"spokes": {
-        "2001:0021:77aa:b34f:657b:a4b2:ea6f:7537": "INITIAL_STATE"
-	},
-	"hubs": {
-        "2001:0021:6d6f:e8ec:7dce:bd01:a6d2:239e": "INITIAL_STATE",
-		"2001:0021:b700:c845:6c5f:46bb:be58:2388": "INITIAL_STATE"
 	}
 }
 
