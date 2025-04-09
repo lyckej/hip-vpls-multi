@@ -277,8 +277,9 @@ class HIPLib():
                 
     # =========== EXTRACT yi and map to ihit =====================
                 params = hip_packet.get_parameters()
+                ECBD_param = None
                 for param in params:
-                    if isinstance(param, ECBDParameter):
+                    if isinstance(param, HIP.ECBDParameter):
                         ECBD_param = param  # Return the first found ECBDParameter
                 
                 self.hit_to_yi_dict[ihit] = ECBD_param # Remember to change when we move 'hit_to_yi' to the databases
@@ -307,7 +308,7 @@ class HIPLib():
                 puzzle_param.set_lifetime(self.config["security"]["puzzle_lifetime_exponent"]);
                 puzzle_param.set_random([0] * r_hash.LENGTH, rhash_length = r_hash.LENGTH);
                 puzzle_param.set_opaque(bytearray([0, 0]));
-                
+                """        
                 # HIP DH groups parameter
                 dh_groups_param = HIP.DHGroupListParameter();
                 # Prepare Diffie-Hellman parameters
@@ -346,6 +347,9 @@ class HIPLib():
                 dh_param = HIP.DHParameter();
                 dh_param.set_group_id(selected_dh_group);
                 dh_param.add_public_value(dh.encode_public_key());
+                """
+
+                
 
                 # HIP cipher parameter
                 cipher_param = HIP.CipherParameter();

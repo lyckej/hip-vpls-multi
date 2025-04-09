@@ -277,8 +277,9 @@ class HIPLib():
                 
     # =========== EXTRACT yi and map to ihit =====================
                 params = hip_packet.get_parameters()
+                ECBD_param = None
                 for param in params:
-                    if isinstance(param, ECBDParameter):
+                    if isinstance(param, HIP.ECBDParameter):
                         ECBD_param = param  # Return the first found ECBDParameter
                 
                 self.hit_to_yi_dict[ihit] = ECBD_param # Remember to change when we move 'hit_to_yi' to the databases
