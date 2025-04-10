@@ -227,7 +227,7 @@ class HIPLib():
 
             if hip_packet.get_packet_type() == HIP.HIP_I1_PACKET:
                 logging.info("I1 packet");
-                """=========================== I1 ================================"""
+                """=========================== I1 ==============================================="""
 
                 if hip_state.is_i1_sent() and Utils.is_hit_smaller(rhit, ihit):
                     logging.debug("Staying in I1-SENT state");
@@ -283,9 +283,10 @@ class HIPLib():
                     if isinstance(param, HIP.ECBDParameter):
                         ECBD_param = param  # Return the first found ECBDParameter
                 
-                self.hit_to_yi_dict[ihit] = ECBD_param # Remember to change when we move 'hit_to_yi' to the databases
+                self.hit_to_yi_dict[bytes(ihit)] = ECBD_param # Remember to change when we move 'hit_to_yi' to the databases
 
-                logging.critical(f" ihit: {ihit}, ECBD_param: {ECBD_param}, hit_to_yi: {self.hit_to_yi_dict} " )
+                logging.debug(f" ihit: {ihit}, ECBD_param: {ECBD_param}, hit_to_yi: {self.hit_to_yi_dict} " )
+
     # ============ ======================= =======================
 
                 # Construct R1 packet
