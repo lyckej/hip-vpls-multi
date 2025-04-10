@@ -79,7 +79,7 @@ class HIPLib():
     def __init__(self, config):
 
 # === THIS SHOULD BE MOVED TO DATATBASE FOR GOVERNOR AT SOME POINT ===
-        self.hit_to_yi_dict = dict() 
+        self.hit_to_yi_dict = SA.get_yi_dict()
 # === ============================= ===
         self.config = config;
         self.MTU = self.config["network"]["mtu"];
@@ -274,6 +274,11 @@ class HIPLib():
                 # R1 packet should be constructed only 
                 # if the state is not associated
                 # Need to check with the RFC
+                dict_val =  self.hit_to_yi_dict.get[str(ihit)]
+                if dict_val == None:
+                    self.hit_to_yi_dict[str(ihit)] = 1
+                else:
+                    self.hit_to_yi_dict[str(ihit)] =+ 1
 
                 
                 # Construct R1 packet
@@ -297,7 +302,7 @@ class HIPLib():
                 puzzle_param.set_lifetime(self.config["security"]["puzzle_lifetime_exponent"]);
                 puzzle_param.set_random([0] * r_hash.LENGTH, rhash_length = r_hash.LENGTH);
                 puzzle_param.set_opaque(bytearray([0, 0]));
-                """        
+                       
                 # HIP DH groups parameter
                 dh_groups_param = HIP.DHGroupListParameter();
                 # Prepare Diffie-Hellman parameters
@@ -336,8 +341,6 @@ class HIPLib():
                 dh_param = HIP.DHParameter();
                 dh_param.set_group_id(selected_dh_group);
                 dh_param.add_public_value(dh.encode_public_key());
-                """
-
                 
 
                 # HIP cipher parameter
@@ -2947,7 +2950,7 @@ class HIPLib():
         response = []
         for key in self.state_variables.keys():
             sv = self.state_variables.get_by_key(key); 
-
+            print(SA.get_yi_dict())
             if Utils.is_hit_smaller(sv.rhit, sv.ihit):
                 hip_state = self.hip_state_machine.get(Utils.ipv6_bytes_to_hex_formatted(sv.rhit), 
                     Utils.ipv6_bytes_to_hex_formatted(sv.ihit));
