@@ -274,19 +274,8 @@ class HIPLib():
                 # R1 packet should be constructed only 
                 # if the state is not associated
                 # Need to check with the RFC
-                
-    # =========== EXTRACT yi and map to ihit =====================
-                params = hip_packet.get_parameters()
-                ECBD_param = None
-                for param in params:
-                    if isinstance(param, HIP.ECBDParameter):
-                        ECBD_param = param  # Return the first found ECBDParameter
-                
-                self.hit_to_yi_dict[bytes(ihit)] = ECBD_param # Remember to change when we move 'hit_to_yi' to the databases
 
-                logging.debug(f" ihit: {ihit}, ECBD_param: {ECBD_param}, hit_to_yi: {self.hit_to_yi_dict} " )
-    # ============ ======================= =======================
-
+                
                 # Construct R1 packet
                 hip_r1_packet = HIP.R1Packet();
                 hip_r1_packet.set_senders_hit(rhit);

@@ -276,6 +276,7 @@ class HIPLib():
                 # Need to check with the RFC
                 
     # =========== EXTRACT yi and map to ihit =====================
+                """
                 params = hip_packet.get_parameters()
                 for param in params:
                     if isinstance(param, HIP.ECBDParameter):
@@ -284,6 +285,7 @@ class HIPLib():
                 self.hit_to_yi_dict[bytes(ihit)] = ECBD_param # Remember to change when we move 'hit_to_yi' to the databases
 
                 logging.debug(f" ihit: {ihit}, ECBD_param: {ECBD_param}, hit_to_yi: {self.hit_to_yi_dict} " )
+                """
     # ============ ======================= =======================
 
                 # Construct R1 packet

@@ -218,7 +218,6 @@ ether_if_th_loop = threading.Thread(target = ether_loop, args = (), daemon = Tru
 
 logging.info("Starting the switchd");
 
-initiate_multi_bex()
 hip_th_loop.start();
 ip_sec_th_loop.start();
 ether_if_th_loop.start();
