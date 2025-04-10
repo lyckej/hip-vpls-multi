@@ -77,6 +77,7 @@ from hiplib.utils.misc import Utils
 
 class HIPLib():
     def __init__(self, config):
+        self.yi_dict = dict()
         self.config = config;
         self.MTU = self.config["network"]["mtu"];
 
@@ -265,7 +266,7 @@ class HIPLib():
                         sv.is_responder = True;
                         sv.ihit = ihit;
                         sv.rhit = rhit;
-
+                self.yi_dict[int.from_bytes(ihit, byte='big')]
                 # Check the state of the HIP protocol
                 # R1 packet should be constructed only 
                 # if the state is not associated
@@ -1850,7 +1851,6 @@ class HIPLib():
                 
                 logging.debug("DERIVING KEYS")
                 logging.debug(keymat)
-
                 # Incomming SA (IPa, IPb)
                 # R2 PACKET
                 # Initiator
@@ -3305,5 +3305,6 @@ class HIPLib():
                     logging.debug("Transitioning to UNASSOCIATED state...");
                     hip_state.unassociated();
         return response
+
 
 

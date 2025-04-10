@@ -92,7 +92,7 @@ def run():
     info( net[ 's3' ].cmd( 'ovs-vsctl set bridge s3 stp_enable=true' ) )
     info( net[ 's4' ].cmd( 'ovs-vsctl set bridge s4 stp_enable=true' ) )
 
-
+    """
     info( '*** Routing Table on Router:\n' )
     info( net[ 'r1' ].cmd( 'route' ) )
     info( '*** Routing Table on Router:\n' )
@@ -105,6 +105,7 @@ def run():
     info( net[ 'r3' ].cmd( 'cd router3 && python3 switchd.py &' ) )
     info( '*** Running HIPLS on router 4 *** \n')
     info( net[ 'r4' ].cmd( 'cd router4 && python3 switchd.py &' ) )
+    """
     CLI( net )
     net.stop()
 
