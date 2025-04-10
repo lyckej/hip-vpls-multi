@@ -56,19 +56,19 @@ def run():
     info(net['r4'].cmd('ifconfig r4-eth1 192.168.3.4 netmask 255.255.255.248'))
 
     # Disable offload settings
-    info(net['r1'].cmd('/sbin/ethtool -K r1-eth0 rx off tx off sg off'))
-    info(net['r1'].cmd('/sbin/ethtool -K r1-eth1 rx off tx off sg off'))
-    info(net['r2'].cmd('/sbin/ethtool -K r2-eth0 rx off tx off sg off'))
-    info(net['r2'].cmd('/sbin/ethtool -K r2-eth1 rx off tx off sg off'))
-    info(net['r3'].cmd('/sbin/ethtool -K r3-eth0 rx off tx off sg off'))
-    info(net['r4'].cmd('/sbin/ethtool -K r3-eth1 rx off tx off sg off'))
-    info(net['r4'].cmd('/sbin/ethtool -K r4-eth0 rx off tx off sg off'))
-    info(net['r4'].cmd('/sbin/ethtool -K r4-eth1 rx off tx off sg off'))
+    net['r1'].cmd('/sbin/ethtool -K r1-eth0 rx off tx off sg off')
+    net['r1'].cmd('/sbin/ethtool -K r1-eth1 rx off tx off sg off')
+    net['r2'].cmd('/sbin/ethtool -K r2-eth0 rx off tx off sg off')
+    net['r2'].cmd('/sbin/ethtool -K r2-eth1 rx off tx off sg off')
+    net['r3'].cmd('/sbin/ethtool -K r3-eth0 rx off tx off sg off')
+    net['r4'].cmd('/sbin/ethtool -K r3-eth1 rx off tx off sg off')
+    net['r4'].cmd('/sbin/ethtool -K r4-eth0 rx off tx off sg off')
+    net['r4'].cmd('/sbin/ethtool -K r4-eth1 rx off tx off sg off')
 
-    info(net['h1'].cmd('/sbin/ethtool -K h1-eth0 rx off tx off sg off'))
-    info(net['h2'].cmd('/sbin/ethtool -K h2-eth0 rx off tx off sg off'))
-    info(net['h3'].cmd('/sbin/ethtool -K h3-eth0 rx off tx off sg off'))
-    info(net['h4'].cmd('/sbin/ethtool -K h4-eth0 rx off tx off sg off'))
+    net['h1'].cmd('/sbin/ethtool -K h1-eth0 rx off tx off sg off')
+    net['h2'].cmd('/sbin/ethtool -K h2-eth0 rx off tx off sg off')
+    net['h3'].cmd('/sbin/ethtool -K h3-eth0 rx off tx off sg off')
+    net['h4'].cmd('/sbin/ethtool -K h4-eth0 rx off tx off sg off')
 
     # Set MTU for hosts
     info(net['h1'].cmd('ifconfig h1-eth0 mtu 1400'))
@@ -85,15 +85,16 @@ def run():
     # Routing table info
     info('*** Routing Table on Router:\n')
     info(net['r1'].cmd('route'))
-    info('*** Routing Table on Router:\n')
     info(net['r2'].cmd('route'))
-
+    info(net['r3'].cmd('route'))
+    info(net['r4'].cmd('route'))
+    """
     # Open xterm windows for each router and host (including 'r1', 'r2', etc.)
     for node in ['r1', 'r2', 'r3', 'r4']:
         info(f"Opening xterm for {node}\n")
         node_obj = net[node]
-        node_obj.cmd(f'xterm -display $DISPLAY &')
-
+        node_obj.cmd(f'xterm -display $DISPLAY')
+    """
     # Start the Mininet CLI
     CLI(net)
 

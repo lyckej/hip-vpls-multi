@@ -1,6 +1,37 @@
 Traceback (most recent call last):
+  File "/home/mininet/hip-testing/frankenstein/hip-vpls-multi/router1/hiplib/hlib.py", line 285, in process_hip_packet
+    self.hit_to_yi_dict[ihit] = ECBD_param # Remember to change when we move 'hit_to_yi' to the databases
+TypeError: unhashable type: 'bytearray'
+Traceback (most recent call last):
+  File "/home/mininet/hip-testing/frankenstein/hip-vpls-multi/router1/hiplib/hlib.py", line 285, in process_hip_packet
+    self.hit_to_yi_dict[ihit] = ECBD_param # Remember to change when we move 'hit_to_yi' to the databases
+TypeError: unhashable type: 'bytearray'
+Traceback (most recent call last):
+  File "/home/mininet/hip-testing/frankenstein/hip-vpls-multi/router1/hiplib/hlib.py", line 285, in process_hip_packet
+    self.hit_to_yi_dict[ihit] = ECBD_param # Remember to change when we move 'hit_to_yi' to the databases
+TypeError: unhashable type: 'bytearray'
+Traceback (most recent call last):
+  File "/home/mininet/hip-testing/frankenstein/hip-vpls-multi/router1/hiplib/hlib.py", line 285, in process_hip_packet
+    self.hit_to_yi_dict[ihit] = ECBD_param # Remember to change when we move 'hit_to_yi' to the databases
+TypeError: unhashable type: 'bytearray'
+Traceback (most recent call last):
+  File "/home/mininet/hip-testing/frankenstein/hip-vpls-multi/router1/hiplib/hlib.py", line 285, in process_hip_packet
+    self.hit_to_yi_dict[ihit] = ECBD_param # Remember to change when we move 'hit_to_yi' to the databases
+TypeError: unhashable type: 'bytearray'
+Traceback (most recent call last):
   File "switchd.py", line 238, in <module>
     run_switch()
   File "switchd.py", line 232, in run_switch
     sleep(1);
 KeyboardInterrupt
+Error in atexit._run_exitfuncs:
+Traceback (most recent call last):
+  File "switchd.py", line 126, in onclose
+    packets = hiplib.exit_handler()
+  File "/home/mininet/hip-testing/frankenstein/hip-vpls-multi/router1/hiplib/hlib.py", line 2883, in exit_handler
+    (aes_key, hmac_key) = Utils.get_keys(keymat, hmac_alg, cipher_alg, sv.rhit, sv.ihit);
+  File "/home/mininet/hip-testing/frankenstein/hip-vpls-multi/router1/hiplib/utils/misc.py", line 379, in get_keys
+    cipher  = SymmetricCiphersFactory.get(cipher_alg);
+  File "/home/mininet/hip-testing/frankenstein/hip-vpls-multi/router1/hiplib/crypto/factory.py", line 73, in get
+    raise Exception("Not implemented");
+Exception: Not implemented
