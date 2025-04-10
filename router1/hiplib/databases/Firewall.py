@@ -32,7 +32,7 @@ class BasicFirewall():
         self.rules = [];
 
     def load_rules(self, file):
-        fd = open(file, "r")
+        fd = open(file, "rules")
         rules = fd.readlines();
         for rule_desc in rules:
             parts = rule_desc.split(" ")
