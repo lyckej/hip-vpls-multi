@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "switchd.py", line 103, in <module>
+    hiplib = HIPLib(hip_config.config);
+  File "/home/mininet/hip-testing/frankenstein/hip-vpls-multi/router4/hiplib/hlib.py", line 82, in __init__
+    self.hit_to_yi_dict = SA.get_yi_dict()
+AttributeError: module 'hiplib.databases.SA' has no attribute 'get_yi_dict'

@@ -2,3 +2,7 @@
 __pycache__
 **/hipls.log
 new-bfg/
+router1/switchd.log
+router2/switchd.log
+router3/switchd.log
+router4/switchd.log

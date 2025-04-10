@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "switchd.py", line 122, in <module>
+    fib = FIB(hip_config.config["switch"]["mesh"])
+  File "/home/mininet/hip-testing/frankenstein/hip-vpls-multi/router2/switchfabric.py", line 24, in __init__
+    self.load_mesh(file);
+  File "/home/mininet/hip-testing/frankenstein/hip-vpls-multi/router2/switchfabric.py", line 33, in load_mesh
+    rhit = parts[1].replace(":", "").strip()
+IndexError: list index out of range
