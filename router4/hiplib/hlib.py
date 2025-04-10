@@ -79,7 +79,7 @@ class HIPLib():
     def __init__(self, config):
 
 # === THIS SHOULD BE MOVED TO DATATBASE FOR GOVERNOR AT SOME POINT ===
-        self.hit_to_yi_dict = SA.get_yi_dict()
+        self.hit_to_yi_dict = dict()
 # === ============================= ===
         self.config = config;
         self.MTU = self.config["network"]["mtu"];
@@ -2950,7 +2950,8 @@ class HIPLib():
         response = []
         for key in self.state_variables.keys():
             sv = self.state_variables.get_by_key(key); 
-            logging.debug(SA.get_yi_dict())
+            logging.debug(self.hit_to_yi_dict)
+
             if Utils.is_hit_smaller(sv.rhit, sv.ihit):
                 hip_state = self.hip_state_machine.get(Utils.ipv6_bytes_to_hex_formatted(sv.rhit), 
                     Utils.ipv6_bytes_to_hex_formatted(sv.ihit));

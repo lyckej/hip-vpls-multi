@@ -39,10 +39,7 @@ class SecurityAssociationRecord():
 		self.hmac_alg = factory.HMACFactory.get(hmac_alg, self.hmac_key);
 		self.src      = src;
 		self.dst      = dst;
-		self.yi_dict  = dict()
-
-	def get_yi_dict():
-		return self.yi_dict
+		
 	def get_spi(self):
 		return self.spi;
 	def set_spi(self, spi):
