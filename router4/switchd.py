@@ -122,11 +122,22 @@ ether_socket.bind((hip_config.config["switch"]["l2interface"], 0))
 fib = FIB(hip_config.config["switch"]["mesh"])
 
 
+
 def onclose():
     packets = hiplib.exit_handler()
     for (packet, dest) in packets:
         hip_socket.sendto(packet, dest)
 
+
+def on_start():
+    try:
+        packets = hiplib.gov_startup()
+        for (packet, dst) in packets:
+            hip_socket.sendto(packet, dst)   
+    except Exception as e:
+        logging.debug("Exception occured while starting up Gov")
+        logging.debug(e)
+        logging.debug(traceback.format_exc())
 
 def hip_loop():
     while True:
@@ -211,6 +222,8 @@ def ether_loop():
 
 # Register exit handler
 atexit.register(onclose);
+
+on_start()
 
 hip_th_loop = threading.Thread(target = hip_loop, args = (), daemon = True);
 ip_sec_th_loop = threading.Thread(target = ip_sec_loop, args = (), daemon = True);

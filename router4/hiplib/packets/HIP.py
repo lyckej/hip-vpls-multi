@@ -312,6 +312,46 @@ class DHParameter(HIPParameter):
 		public_value_length = self.get_public_value_length() * 8;
 		return self.buffer[HIP_PUBLIC_VALUE_OFFSET:HIP_PUBLIC_VALUE_OFFSET + public_value_length]
 
+
+HIP_ECBD_TYPE = 0x202;
+class ECBDParameter(HIPParameter):
+	def __init__(self, buffer = None):
+		self.buffer = buffer;
+		if not self.buffer:
+			self.buffer = bytearray([0] * (
+				HIP_TLV_LENGTH_LENGTH + 
+				HIP_TLV_TYPE_LENGTH +
+				HIP_GROUP_ID_LENGTH +
+				HIP_PUBLIC_VALUE_LENGTH_LENGTH
+				));
+			self.set_type(HIP_ECBD_TYPE);
+			self.set_length(HIP_GROUP_ID_LENGTH + HIP_PUBLIC_VALUE_LENGTH_LENGTH);
+	def get_group_id(self):
+		return self.buffer[HIP_DH_GROUP_ID_OFFSET];
+	def set_group_id(self, group_id):
+		self.buffer[HIP_DH_GROUP_ID_OFFSET] = group_id;
+	def get_public_value_length(self):
+		return (self.buffer[HIP_PUBLIC_VALUE_LENGTH_OFFSET] << 8 | self.buffer[HIP_PUBLIC_VALUE_LENGTH_OFFSET + 1])
+	def set_public_value_length(self, public_value_length):
+		self.buffer[HIP_PUBLIC_VALUE_LENGTH_OFFSET] = ((public_value_length << 8) & 0xFF)
+		self.buffer[HIP_PUBLIC_VALUE_LENGTH_OFFSET + 1] = (public_value_length & 0xFF)
+	def add_public_value(self, public_value):
+		dh_public_value_length = self.get_public_value_length();
+		if dh_public_value_length != 0x0:
+			raise Exception("DH public key was already set");
+		length = self.get_length();
+		self.buffer += public_value;
+		padding = (8 - len(self.buffer) % 8) % 8;
+		self.buffer += bytearray([0] * padding);
+		length = len(public_value) + HIP_GROUP_ID_LENGTH + HIP_PUBLIC_VALUE_LENGTH_LENGTH;
+		self.set_length(length);
+		self.set_public_value_length(int(len(public_value) / 8));
+		
+	def get_public_value(self):
+		public_value_length = self.get_public_value_length() * 8;
+		return self.buffer[HIP_PUBLIC_VALUE_OFFSET:HIP_PUBLIC_VALUE_OFFSET + public_value_length]
+
+
 HIP_CIPHER_TYPE                     = 0x243;
 HIP_CIPHER_LIST_OFFSET              = 0x4;
 

@@ -25,6 +25,7 @@ __status__ = "development"
 
 from binascii import hexlify
 # Import the needed libraries
+from crypto.ecbd import ECBD
 # Stacktrace
 import traceback
 # Sockets
@@ -79,7 +80,8 @@ class HIPLib():
     def __init__(self, config):
         self.config = config;
         self.MTU = self.config["network"]["mtu"];
-
+        self.ip_addr = self.config["switch"]["source_ip"];
+        self.id = int(self.ip_addr.split(".")[-1])-1;
         self.firewall = Firewall.BasicFirewall();
         self.firewall.load_rules(self.config["firewall"]["rules_file"])
 
@@ -146,7 +148,8 @@ class HIPLib():
         self.key_info_storage  = HIPState.Storage();
         self.esp_transform_storage = HIPState.Storage();
         self.hi_param_storage  = HIPState.Storage();
-
+        self.ecbd_storage = ECBD(self.id);
+        self.yi_= []
         if self.config["general"]["rekey_after_packets"] > ((2<<32)-1):
             self.config["general"]["rekey_after_packets"] = (2<<32)-1;
 
@@ -157,7 +160,242 @@ class HIPLib():
         self.firewall.load_rules(self.config["firewall"]["rules_file"])
         logging.info("Using hosts file to resolve HITS %s" % (self.config["resolver"]["hosts_file"]));
         self.hit_resolver.load_records(filename = self.config["resolver"]["hosts_file"]);
+    """        
+    def gov_startup(self):
+        response = []
+        i1_packet = HIP.I1Packet(HIP.HIPPacket())
+        gov_hit = self.get_own_hit()
+        r1_hit = Utils.ipv6_to_bytes("2001:0021:e1dd:fc6a:83ee:5648:830c:5681")
+        i1_packet.set_senders_hit(gov_hit);
+        i1_packet.set_receivers_hit(r1_hit);
+        i1_packet.set_next_header(HIP.HIP_IPPROTO_NONE);
+        i1_packet.set_version(HIP.HIP_VERSION);
+        i1_packet.add_parameter("yi");
+    
+       # Compute the checksum of HIP packet
+        checksum = Utils.hip_ipv4_checksum(
+            gov_hit, 
+            r1_hit, 
+            HIP.HIP_PROTOCOL, 
+            i1_packet.get_length() * 8 + 8, 
+            i1_packet.get_buffer());
+        i1_packet.set_checksum(checksum);
+
+        dst_str = "192.168.3.1" 
+        dst = Utils.ipv4_to_bytes(dst_str)
+        src_str = "192.168.3.4"
+        src = Utils.ipv4_to_bytes(src_str)
+
+        # Construct the IPv4 packet
+        ipv4_packet = IPv4.IPv4Packet();
+        ipv4_packet.set_version(IPv4.IPV4_VERSION);
+        ipv4_packet.set_destination_address(dst);
+        ipv4_packet.set_source_address(src);
+        ipv4_packet.set_ttl(IPv4.IPV4_DEFAULT_TTL);
+        ipv4_packet.set_protocol(HIP.HIP_PROTOCOL);
+        ipv4_packet.set_ihl(IPv4.IPV4_IHL_NO_OPTIONS);
+        ipv4_packet.set_payload(i1_packet.get_buffer());
+
+        # Send HIP I1 packet to destination
+        logging.debug("Sending gov_I1 packet to R1 ");
+        #hip_socket.sendto(bytearray(ipv4_packet.get_buffer()), (dst_str.strip(), 0));
+        response.append((True, bytearray(ipv4_packet.get_buffer()), (dst_str.strip(), 0)))
+
+        return response
+    """      
+
+    """"
+    def send_out_r1(self, rhits ):
+        response = []
         
+        # Construct R1 packet
+        hip_r1_packet = HIP.R1Packet();
+        hip_r1_packet.set_senders_hit(rhit);
+        #hip_r1_packet.set_receivers_hit(ihit);
+        hip_r1_packet.set_next_header(HIP.HIP_IPPROTO_NONE);
+        hip_r1_packet.set_version(HIP.HIP_VERSION);
+
+        r_hash = HIT.get_responders_hash_algorithm(rhit);
+
+        # R1 Counter 
+        r1counter_param = HIP.R1CounterParameter()
+        sv.r1_counter += 1
+        r1counter_param.set_counter(sv.r1_counter)
+
+        # Prepare puzzle
+        irandom = PuzzleSolver.generate_irandom(r_hash.LENGTH);
+        puzzle_param = HIP.PuzzleParameter(buffer = None, rhash_length = r_hash.LENGTH);
+        puzzle_param.set_k_value(self.config["security"]["puzzle_difficulty"]);
+        puzzle_param.set_lifetime(self.config["security"]["puzzle_lifetime_exponent"]);
+        puzzle_param.set_random([0] * r_hash.LENGTH, rhash_length = r_hash.LENGTH);
+        puzzle_param.set_opaque(bytearray([0, 0]));
+        
+        """
+        # HIP DH groups parameter
+        dh_groups_param = HIP.DHGroupListParameter();
+        # Prepare Diffie-Hellman parameters
+        dh_groups_param_initiator = None;
+        parameters = hip_packet.get_parameters();
+        for parameter in parameters:
+            if isinstance(parameter, HIP.DHGroupListParameter):
+                dh_groups_param_initiator = parameter;
+        if not dh_groups_param_initiator:
+            # Drop HIP BEX?
+            logging.debug("No DH groups parameter found. Dropping I1 packet");
+            return [];
+        offered_dh_groups = dh_groups_param_initiator.get_groups();
+        supported_dh_groups = self.config["security"]["supported_DH_groups"];
+        selected_dh_group = None;
+        for group in offered_dh_groups:
+            if group in supported_dh_groups:
+                dh_groups_param.add_groups([group]);
+                selected_dh_group = group;
+                break;
+        if not selected_dh_group:
+            logging.debug("Unsupported DH group");
+            return [];
+
+        dh = factory.DHFactory.get(selected_dh_group);
+        private_key = dh.generate_private_key();
+        public_key = dh.generate_public_key();
+
+        if not self.dh_storage.get(r1counter_param.get_counter(), None):
+            self.dh_storage[r1counter_param.get_counter()] = HIPState.Storage()
+        
+        self.dh_storage[r1counter_param.get_counter()].save(Utils.ipv6_bytes_to_hex_formatted(ihit), 
+            Utils.ipv6_bytes_to_hex_formatted(rhit), dh);
+        
+
+        dh_param = HIP.DHParameter();
+        dh_param.set_group_id(selected_dh_group);
+        dh_param.add_public_value(dh.encode_public_key());
+        """
+
+
+        # HIP cipher parameter
+        cipher_param = HIP.CipherParameter();
+        cipher_param.add_ciphers(self.config["security"]["supported_ciphers"]);
+
+        # ESP transform parameter
+        esp_transform_param = HIP.ESPTransformParameter();
+        esp_transform_param.add_suits(self.config["security"]["supported_esp_transform_suits"]);
+
+        # HIP host ID parameter
+        hi_param = HIP.HostIdParameter();
+        hi_param.set_host_id(self.hi);
+        # It is important to set domain ID after host ID was set
+        logging.debug(self.di);
+        hi_param.set_domain_id(self.di);
+
+        self.own_hi_param = hi_param;
+
+        # HIP HIT suit list parameter
+        hit_suit_param = HIP.HITSuitListParameter();
+        hit_suit_param.add_suits(self.config["security"]["supported_hit_suits"]);
+
+        # Transport format list
+        transport_param = HIP.TransportListParameter();
+        transport_param.add_transport_formats(self.config["security"]["supported_transports"]);
+
+        # HIP signature parameter
+        signature_param = HIP.Signature2Parameter();
+
+        # Compute signature here
+        # R1 8
+        #Puzzle 257
+        #DH groups 511
+        #DH 513
+        #Cipher 579
+        #HI 705
+        #HIT suit 715
+        #Transport 2049
+        #ESP transform 4095
+        #Signature2 61633
+        # Compute signature here
+        buf = r1counter_param.get_byte_buffer() + \
+                puzzle_param.get_byte_buffer() + \
+                dh_groups_param.get_byte_buffer() + \
+                dh_param.get_byte_buffer() + \
+                cipher_param.get_byte_buffer() + \
+                hi_param.get_byte_buffer() + \
+                hit_suit_param.get_byte_buffer() + \
+                transport_param.get_byte_buffer() + \
+                esp_transform_param.get_byte_buffer();
+        original_length = hip_r1_packet.get_length();
+        packet_length = original_length * 8 + len(buf);
+        hip_r1_packet.set_length(int(packet_length / 8));
+        buf = hip_r1_packet.get_buffer() + buf;
+
+        if isinstance(self.privkey, RSAPrivateKey):
+            signature_alg = RSASHA256Signature(self.privkey.get_key_info());
+        elif isinstance(self.privkey, ECDSAPrivateKey):
+            signature_alg = ECDSASHA384Signature(self.privkey.get_key_info());
+        elif isinstance(self.privkey, ECDSALowPrivateKey):
+            signature_alg = ECDSASHA1Signature(self.privkey.get_key_info());
+
+        #logging.debug(privkey.get_key_info());
+        signature = signature_alg.sign(bytearray(buf));
+        signature_param.set_signature_algorithm(self.config["security"]["sig_alg"]);
+        signature_param.set_signature(signature);				
+
+        # Add parameters to R1 packet (order is important)
+        hip_r1_packet.set_length(HIP.HIP_DEFAULT_PACKET_LENGTH);
+        # List of mandatory parameters in R1 packet...
+        
+        # R1 8
+        #Puzzle 257
+        #DH groups 511
+        #DH 513
+        #Cipher 579
+        #HI 705
+        #HIT suit 715
+        #Transport 2049
+        #ESP transform 4095
+        #Signature2 61633
+        puzzle_param.set_random(irandom, r_hash.LENGTH);
+        puzzle_param.set_opaque(bytearray(Utils.generate_random(2)));
+        hip_r1_packet.add_parameter(r1counter_param);
+        hip_r1_packet.add_parameter(puzzle_param);
+        hip_r1_packet.add_parameter(dh_groups_param);
+        hip_r1_packet.add_parameter(dh_param);
+        hip_r1_packet.add_parameter(cipher_param);
+        hip_r1_packet.add_parameter(hi_param);
+        hip_r1_packet.add_parameter(hit_suit_param);
+        hip_r1_packet.add_parameter(transport_param);
+        hip_r1_packet.add_parameter(esp_transform_param);
+        hip_r1_packet.add_parameter(signature_param);
+
+        # Swap the addresses
+        temp = src;
+        src = dst;
+        dst = temp;
+
+        # Set receiver's HIT
+        hip_r1_packet.set_receivers_hit(ihit);
+
+        # Create IPv4 packet
+        ipv4_packet = IPv4.IPv4Packet();
+        ipv4_packet.set_version(IPv4.IPV4_VERSION);
+        ipv4_packet.set_destination_address(dst);
+        ipv4_packet.set_source_address(src);
+        ipv4_packet.set_ttl(IPv4.IPV4_DEFAULT_TTL);
+        ipv4_packet.set_protocol(HIP.HIP_PROTOCOL);
+        ipv4_packet.set_ihl(IPv4.IPV4_IHL_NO_OPTIONS);
+
+        # Calculate the checksum
+        checksum = Utils.hip_ipv4_checksum(
+            src, 
+            dst, 
+            HIP.HIP_PROTOCOL, 
+            hip_r1_packet.get_length() * 8 + 8, 
+            hip_r1_packet.get_buffer());
+        hip_r1_packet.set_checksum(checksum);
+        ipv4_packet.set_payload(hip_r1_packet.get_buffer());
+        # Send the packet
+        dst_str = Utils.ipv4_bytes_to_string(dst);
+        response.append((bytearray(ipv4_packet.get_buffer()), (dst_str.strip(), 0)))
+        # Stay in current state
+    """
     def process_hip_packet(self, packet):
         try:
             response = [];
@@ -265,196 +503,28 @@ class HIPLib():
                         sv.is_responder = True;
                         sv.ihit = ihit;
                         sv.rhit = rhit;
-
+                
                 # Check the state of the HIP protocol
                 # R1 packet should be constructed only 
                 # if the state is not associated
                 # Need to check with the RFC
 
-                # Construct R1 packet
-                hip_r1_packet = HIP.R1Packet();
-                hip_r1_packet.set_senders_hit(rhit);
-                #hip_r1_packet.set_receivers_hit(ihit);
-                hip_r1_packet.set_next_header(HIP.HIP_IPPROTO_NONE);
-                hip_r1_packet.set_version(HIP.HIP_VERSION);
-
-                r_hash = HIT.get_responders_hash_algorithm(rhit);
-
-                # R1 Counter 
-                r1counter_param = HIP.R1CounterParameter()
-                sv.r1_counter += 1
-                r1counter_param.set_counter(sv.r1_counter)
-
-                # Prepare puzzle
-                irandom = PuzzleSolver.generate_irandom(r_hash.LENGTH);
-                puzzle_param = HIP.PuzzleParameter(buffer = None, rhash_length = r_hash.LENGTH);
-                puzzle_param.set_k_value(self.config["security"]["puzzle_difficulty"]);
-                puzzle_param.set_lifetime(self.config["security"]["puzzle_lifetime_exponent"]);
-                puzzle_param.set_random([0] * r_hash.LENGTH, rhash_length = r_hash.LENGTH);
-                puzzle_param.set_opaque(bytearray([0, 0]));
-                
-                # HIP DH groups parameter
-                dh_groups_param = HIP.DHGroupListParameter();
-                # Prepare Diffie-Hellman parameters
-                dh_groups_param_initiator = None;
-                parameters = hip_packet.get_parameters();
+                ecbd_param = None
+                parameters = hip_packet.get_parameters()
                 for parameter in parameters:
-                    if isinstance(parameter, HIP.DHGroupListParameter):
-                        dh_groups_param_initiator = parameter;
-                if not dh_groups_param_initiator:
-                    # Drop HIP BEX?
-                    logging.debug("No DH groups parameter found. Dropping I1 packet");
-                    return [];
-                offered_dh_groups = dh_groups_param_initiator.get_groups();
-                supported_dh_groups = self.config["security"]["supported_DH_groups"];
-                selected_dh_group = None;
-                for group in offered_dh_groups:
-                    if group in supported_dh_groups:
-                        dh_groups_param.add_groups([group]);
-                        selected_dh_group = group;
-                        break;
-                if not selected_dh_group:
-                    logging.debug("Unsupported DH group");
-                    return [];
+                    if isinstance(parameter, HIP.ECBDParameter):
+                        ecbd_param = parameter
+                        break
 
-                dh = factory.DHFactory.get(selected_dh_group);
-                private_key = dh.generate_private_key();
-                public_key = dh.generate_public_key();
+                if ecbd_param is None:
+                    logging.debug("NO ECBD_PARAM DETECTED!")
 
-                if not self.dh_storage.get(r1counter_param.get_counter(), None):
-                    self.dh_storage[r1counter_param.get_counter()] = HIPState.Storage()
-                 
-                self.dh_storage[r1counter_param.get_counter()].save(Utils.ipv6_bytes_to_hex_formatted(ihit), 
-                    Utils.ipv6_bytes_to_hex_formatted(rhit), dh);
-                
+                sender_id = int(src_str.split(".")[-1])-1
+                yi = ecbd_param.get_public_value()
+                self.ecbd_storage.z_list[sender_id] = yi
+                logging.debug("- - - -  z list - - - - ", self.ecbd_storage.z_list)
 
-                dh_param = HIP.DHParameter();
-                dh_param.set_group_id(selected_dh_group);
-                dh_param.add_public_value(dh.encode_public_key());
-
-                # HIP cipher parameter
-                cipher_param = HIP.CipherParameter();
-                cipher_param.add_ciphers(self.config["security"]["supported_ciphers"]);
-
-                # ESP transform parameter
-                esp_transform_param = HIP.ESPTransformParameter();
-                esp_transform_param.add_suits(self.config["security"]["supported_esp_transform_suits"]);
-
-                # HIP host ID parameter
-                hi_param = HIP.HostIdParameter();
-                hi_param.set_host_id(self.hi);
-                # It is important to set domain ID after host ID was set
-                logging.debug(self.di);
-                hi_param.set_domain_id(self.di);
-
-                self.own_hi_param = hi_param;
-
-                # HIP HIT suit list parameter
-                hit_suit_param = HIP.HITSuitListParameter();
-                hit_suit_param.add_suits(self.config["security"]["supported_hit_suits"]);
-
-                # Transport format list
-                transport_param = HIP.TransportListParameter();
-                transport_param.add_transport_formats(self.config["security"]["supported_transports"]);
-
-                # HIP signature parameter
-                signature_param = HIP.Signature2Parameter();
-
-                # Compute signature here
-                # R1 8
-                #Puzzle 257
-				#DH groups 511
-				#DH 513
-				#Cipher 579
-				#HI 705
-				#HIT suit 715
-				#Transport 2049
-				#ESP transform 4095
-				#Signature2 61633
-				# Compute signature here
-                buf = r1counter_param.get_byte_buffer() + \
-                        puzzle_param.get_byte_buffer() + \
-                        dh_groups_param.get_byte_buffer() + \
-                        dh_param.get_byte_buffer() + \
-                        cipher_param.get_byte_buffer() + \
-                        hi_param.get_byte_buffer() + \
-                        hit_suit_param.get_byte_buffer() + \
-                        transport_param.get_byte_buffer() + \
-                        esp_transform_param.get_byte_buffer();
-                original_length = hip_r1_packet.get_length();
-                packet_length = original_length * 8 + len(buf);
-                hip_r1_packet.set_length(int(packet_length / 8));
-                buf = hip_r1_packet.get_buffer() + buf;
-
-                if isinstance(self.privkey, RSAPrivateKey):
-                    signature_alg = RSASHA256Signature(self.privkey.get_key_info());
-                elif isinstance(self.privkey, ECDSAPrivateKey):
-                    signature_alg = ECDSASHA384Signature(self.privkey.get_key_info());
-                elif isinstance(self.privkey, ECDSALowPrivateKey):
-                    signature_alg = ECDSASHA1Signature(self.privkey.get_key_info());
-
-                #logging.debug(privkey.get_key_info());
-                signature = signature_alg.sign(bytearray(buf));
-                signature_param.set_signature_algorithm(self.config["security"]["sig_alg"]);
-                signature_param.set_signature(signature);				
-
-                # Add parameters to R1 packet (order is important)
-                hip_r1_packet.set_length(HIP.HIP_DEFAULT_PACKET_LENGTH);
-                # List of mandatory parameters in R1 packet...
-                
-                # R1 8
-                #Puzzle 257
-				#DH groups 511
-				#DH 513
-				#Cipher 579
-				#HI 705
-				#HIT suit 715
-				#Transport 2049
-				#ESP transform 4095
-				#Signature2 61633
-                puzzle_param.set_random(irandom, r_hash.LENGTH);
-                puzzle_param.set_opaque(bytearray(Utils.generate_random(2)));
-                hip_r1_packet.add_parameter(r1counter_param);
-                hip_r1_packet.add_parameter(puzzle_param);
-                hip_r1_packet.add_parameter(dh_groups_param);
-                hip_r1_packet.add_parameter(dh_param);
-                hip_r1_packet.add_parameter(cipher_param);
-                hip_r1_packet.add_parameter(hi_param);
-                hip_r1_packet.add_parameter(hit_suit_param);
-                hip_r1_packet.add_parameter(transport_param);
-                hip_r1_packet.add_parameter(esp_transform_param);
-                hip_r1_packet.add_parameter(signature_param);
-
-                # Swap the addresses
-                temp = src;
-                src = dst;
-                dst = temp;
-
-                # Set receiver's HIT
-                hip_r1_packet.set_receivers_hit(ihit);
-
-                # Create IPv4 packet
-                ipv4_packet = IPv4.IPv4Packet();
-                ipv4_packet.set_version(IPv4.IPV4_VERSION);
-                ipv4_packet.set_destination_address(dst);
-                ipv4_packet.set_source_address(src);
-                ipv4_packet.set_ttl(IPv4.IPV4_DEFAULT_TTL);
-                ipv4_packet.set_protocol(HIP.HIP_PROTOCOL);
-                ipv4_packet.set_ihl(IPv4.IPV4_IHL_NO_OPTIONS);
-
-                # Calculate the checksum
-                checksum = Utils.hip_ipv4_checksum(
-                    src, 
-                    dst, 
-                    HIP.HIP_PROTOCOL, 
-                    hip_r1_packet.get_length() * 8 + 8, 
-                    hip_r1_packet.get_buffer());
-                hip_r1_packet.set_checksum(checksum);
-                ipv4_packet.set_payload(hip_r1_packet.get_buffer());
-                # Send the packet
-                dst_str = Utils.ipv4_bytes_to_string(dst);
-                response.append((bytearray(ipv4_packet.get_buffer()), (dst_str.strip(), 0)))
-                # Stay in current state
+           # We shouldn't be getting any R1 packets to the governor
             elif hip_packet.get_packet_type() == HIP.HIP_R1_PACKET:
                 logging.info("----------------------------- R1 packet ----------------------------- ");
                 
@@ -2628,7 +2698,7 @@ class HIPLib():
             else:
                 hip_state = self.hip_state_machine.get(Utils.ipv6_bytes_to_hex_formatted(ihit), 
                     Utils.ipv6_bytes_to_hex_formatted(rhit));
-            if hip_state.is_unassociated() or hip_state.is_closing() or hip_state.is_closed():
+            """if hip_state.is_unassociated() or hip_state.is_closing() or hip_state.is_closed():
                 #logging.debug("Unassociate state reached");
                 #logging.debug("Starting HIP BEX %f" % (time.time()));
                 #logging.info("Resolving %s to IPv4 address" % Utils.ipv6_bytes_to_hex_formatted(rhit));
@@ -2718,7 +2788,8 @@ class HIPLib():
                     sv.is_responder = False;
                     sv.i1_timeout = time.time() + self.config["general"]["i1_timeout_s"];
                     sv.i1_retries += 1;
-            elif hip_state.is_established():
+            """
+            if hip_state.is_established():
                 #logging.debug("Sending IPSEC packet...")
                 # IPv6 fields
                 rhit_str    = Utils.ipv6_bytes_to_hex_formatted(rhit);

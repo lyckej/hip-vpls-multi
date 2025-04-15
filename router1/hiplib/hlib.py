@@ -74,12 +74,14 @@ from hiplib.databases import resolver
 from hiplib.databases import Firewall
 # Utilities
 from hiplib.utils.misc import Utils
+from hiplib.crypto.ecbd import ECBD
 
 class HIPLib():
     def __init__(self, config):
         self.config = config;
         self.MTU = self.config["network"]["mtu"];
-
+        self.ip_addr = self.config["switch"]["source_ip"];
+        self.id = int(self.ip_addr.split(".")[-1])-1;
         self.firewall = Firewall.BasicFirewall();
         self.firewall.load_rules(self.config["firewall"]["rules_file"])
 
@@ -146,6 +148,7 @@ class HIPLib():
         self.key_info_storage  = HIPState.Storage();
         self.esp_transform_storage = HIPState.Storage();
         self.hi_param_storage  = HIPState.Storage();
+        self.ecbd_storage = ECBD(self.id)
 
         if self.config["general"]["rekey_after_packets"] > ((2<<32)-1):
             self.config["general"]["rekey_after_packets"] = (2<<32)-1;
@@ -2648,16 +2651,19 @@ class HIPLib():
 
                 st = time.time();
                 # Construct the DH groups parameter
-                dh_groups_param = HIP.DHGroupListParameter();
-                dh_groups_param.add_groups(self.config["security"]["supported_DH_groups"]);
+               # dh_groups_param = HIP.DHGroupListParameter();
+               # dh_groups_param.add_groups(self.config["security"]["supported_DH_groups"]);
 
+                ecbd_param = HIP.ECBDParameter(HIP.HIPParameter)
+                yi = self.ecbd_storage.z_list[self.id]
+                ecbd_param.add_public_value(yi)
                 # Create I1 packet
                 hip_i1_packet = HIP.I1Packet();
                 hip_i1_packet.set_senders_hit(ihit);
                 hip_i1_packet.set_receivers_hit(rhit);
                 hip_i1_packet.set_next_header(HIP.HIP_IPPROTO_NONE);
                 hip_i1_packet.set_version(HIP.HIP_VERSION);
-                hip_i1_packet.add_parameter(dh_groups_param);
+                hip_i1_packet.add_parameter(ecbd_param);
 
                 # Compute the checksum of HIP packet
                 checksum = Utils.hip_ipv4_checksum(
